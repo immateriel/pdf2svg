@@ -1138,11 +1138,16 @@ void SVGOutputDev::drawString( GfxState * state, GooString * s )
 		textWidthDiff=textWidthTmp - textWidth;
 	}
 */	
+//	printf("%d %d\n",(int)cx,(int)startX);
+	
 		if(lineY==y 
 		&& fontSize==state->getTransformedFontSize() 
 		&& fontFamily->cmp(fntFamily) == 0  
 		&& charSpace==state->getCharSpace() 
-		&& wordSpace==state->getWordSpace())
+		&& wordSpace==state->getWordSpace()
+		&& cx < startX + 3.0
+		
+		)
 	//	if(false)
 		{
 				textWidthTmp+=cx - lastX;
@@ -1218,7 +1223,9 @@ void SVGOutputDev::drawString( GfxState * state, GooString * s )
 	&& fontSize==state->getTransformedFontSize() 
 	&& fontFamily->cmp(fntFamily) == 0  
 	&& charSpace==state->getCharSpace() 
-	&& wordSpace==state->getWordSpace())
+	&& wordSpace==state->getWordSpace()
+	&& cx < startX + 3.0
+	)
 //	if(false)
 	{	
 				
@@ -1324,7 +1331,7 @@ void SVGOutputDev::drawString( GfxState * state, GooString * s )
 		curTxt=txt;
 		curTxt->addStr(uconv(str,slen));
 		curTxt->setTextWidth(textWidth);
-		
+		startX=cx+textWidth;
 	}
 	
 	lineY=y;
