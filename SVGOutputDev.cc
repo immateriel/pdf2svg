@@ -1345,8 +1345,8 @@ void SVGOutputDev::stroke(GfxState *state) {
 	GooString *p=convertPath(matrix, path);
 	
 	if(!detectLine(state) && !detectRect(state,0)) {
- 		SVGPath *pt=new SVGPath(state->getLineWidth(),state->getStrokeOpacity(),r,g,b,state->getFillOpacity(),NULL,-1,-1,-1,p,matrix);
-		this->AddNode(pt);
+// 		SVGPath *pt=new SVGPath(state->getLineWidth(),state->getStrokeOpacity(),r,g,b,state->getFillOpacity(),NULL,-1,-1,-1,p,matrix);
+//		this->AddNode(pt);
 	}
 }
 
@@ -1366,8 +1366,8 @@ void SVGOutputDev::fill(GfxState *state) {
 	
 	if(!detectLine(state) && !detectRect(state,1)) {
 	
-	SVGPath *pt=new SVGPath(NULL,NULL,-1,-1,-1,state->getFillOpacity(),new GooString("nonzero"),r,g,b,p,matrix);
-	this->AddNode(pt);
+//	SVGPath *pt=new SVGPath(NULL,NULL,-1,-1,-1,state->getFillOpacity(),new GooString("nonzero"),r,g,b,p,matrix);
+//	this->AddNode(pt);
 	}
 }
 
@@ -1386,8 +1386,8 @@ void SVGOutputDev::eofill(GfxState *state) {
 		
 		if(!detectLine(state) && !detectRect(state,2)) {
 		
-	SVGPath *pt=new SVGPath(NULL,NULL,-1,-1,-1,state->getFillOpacity(),new GooString("evenodd"),r,g,b,p,matrix);
-	this->AddNode(pt);
+//	SVGPath *pt=new SVGPath(NULL,NULL,-1,-1,-1,state->getFillOpacity(),new GooString("evenodd"),r,g,b,p,matrix);
+//	this->AddNode(pt);
 	}
 }
 
