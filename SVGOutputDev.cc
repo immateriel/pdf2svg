@@ -52,13 +52,13 @@ GooString *SVGFont::dump()
 	GooString *output=new GooString("");
 
 //	output->appendf("<font>");
-	output->appendf("<font-face font-family=\"{0:s}\" ascent=\"{1:.2f}\" descent=\"{2:.2f}\" font-style=\"{3:s}\" font-weight=\"{4:s}\">\n",name,ascent,descent,style->getCString(),weight->getCString());
+	output->appendf("<font-face font-family=\"{0:s}\" ascent=\"{1:.2f}\" descent=\"{2:.2f}\" font-style=\"{3:s}\" font-weight=\"{4:s}\"/>\n",name,ascent,descent,style->getCString(),weight->getCString());
 //	output->appendf("<font-face-src>\n");
 //	output->appendf("<font-face-uri xlink:href=\"{0:s}.pfa\"/>\n",name->getCString());
 
 //	output->appendf("</font-face-src>\n");
 
-	output->appendf("</font-face>\n");
+//	output->appendf("</font-face>\n");
 
 //	output->appendf("</font>\n");
 	return output;
@@ -933,15 +933,14 @@ void SVGOutputDev::drawSoftMaskedImage(
 {
 	printf("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
 //	printf("<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 20010904//EN\" \n\"http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd\">\n");
-	printf("<?xml-stylesheet href=\"style.css\" type=\"text/css\"?>\n");
+//	printf("<?xml-stylesheet href=\"style.css\" type=\"text/css\"?>\n");
 	printf("<svg version=\"1.2\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" xml:id=\"svg-root\" width=\"%d\" height=\"%d\" viewBox=\"%d %d %d %d\" xmlns=\"http://www.w3.org/2000/svg\">\n",
 	(int)pixel(curPageWidth),(int)pixel(curPageHeight),(int)pixel(this->cropBox->x1),(int)pixel(this->cropBox->y1),(int)pixel(this->cropBox->x2 - this->cropBox->x1),(int)pixel(this->cropBox->y2 - this->cropBox->y1));
 	printf("<defs>\n");
-	printf("%s\n",fonts->dump()->getCString());
+	printf("%s",fonts->dump()->getCString());
 //	printf("<style>\n");
 	
 //	printf("</style>\n");
-	
 	printf("</defs>\n");
 /*	printf("<pageSet>\n");
 	
