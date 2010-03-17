@@ -1109,7 +1109,6 @@ void SVGOutputDev::drawString( GfxState * state, GooString * s )
 	{
 		fntFamily->del(0,i+1);
 	}
-//	printf("%s\n",fntFamily->getCString());
 
 	double totw=0;
 
@@ -1118,27 +1117,6 @@ void SVGOutputDev::drawString( GfxState * state, GooString * s )
 
 	state->transform( cx, cy, &cx, &cy );
 
-//	if(!startedLine)
-//	{
-//		textWidth=0;
-//		} 
-
-	
-/*
-	if(lineY!=y)
-	{
-		textWidth+=textWidthDiff;
-//		closeText();
-//		startedLine=gFalse;
-		textWidthTmp=0;
-	}
-	else
-	{
-		textWidthTmp+=cx - lastX;
-		textWidthDiff=textWidthTmp - textWidth;
-	}
-*/	
-//	printf("%d %d\n",(int)cx,(int)startX);
 	
 		if(lineY==y 
 		&& fontSize==state->getTransformedFontSize() 
@@ -1191,7 +1169,9 @@ void SVGOutputDev::drawString( GfxState * state, GooString * s )
 	}	
 
 //	double xMin, yMin, xMax, yMax;
-//	state->textTransform(&xMin,&yMin,&xMax,&yMax);
+//	state->textTransform(xMin,yMin,xMax,yMax);
+//	printf("DEBUG: %.2f %.2f %.2f %.2f\n",xMin,yMin,xMax,yMax);
+
 //	printf("%.2f\n",state->getLineWidth());
 	double *textMat=state->getTextMat();
 //		printf("DEBUG: %s %.2f %.2f %.2f %.2f %.2f %.2f\n",s->getCString(),textMat[0],textMat[1],textMat[2],textMat[3],textMat[4],textMat[5]);
@@ -1329,6 +1309,8 @@ void SVGOutputDev::drawString( GfxState * state, GooString * s )
 //		updateFont(state);
 		i=this->AddNode(txt);
 		curTxt=txt;
+		curTxt->xMin=cx;
+		curTxt->yMin=cy;
 		curTxt->addStr(uconv(str,slen));
 		curTxt->setTextWidth(textWidth);
 		startX=cx+textWidth;

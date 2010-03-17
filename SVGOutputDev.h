@@ -111,6 +111,7 @@ private:
 	int rotation;
 	int r,g,b;
 public:
+	double xMin,yMin,xMax,yMax;
 	SVGText(double cx, double cy, double fsize, GooString *ffamily, double wspace, double cspace, int rot, int ir, int ig, int ib );
 	SVGText();
 	~SVGText();
