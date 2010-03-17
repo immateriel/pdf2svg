@@ -256,6 +256,54 @@ GooString *SVGImage::dump()
 	return output;
 }
 
+
+// StartNode
+SVGStartNode::SVGStartNode()
+{
+	
+}
+
+SVGStartNode::SVGStartNode(GooString *t)
+{
+	tagName=t;
+}
+
+SVGStartNode::~SVGStartNode()
+{
+	
+}
+
+GooString *SVGStartNode::dump()
+{
+	GooString *output=new GooString("");
+	output->appendf("<{0:s}>\n",tagName);	
+	return output;
+}
+
+
+// EndNode
+SVGEndNode::SVGEndNode()
+{
+	
+}
+
+SVGEndNode::SVGEndNode(GooString *t)
+{
+	tagName=t;
+}
+
+SVGEndNode::~SVGEndNode()
+{
+	
+}
+
+GooString *SVGEndNode::dump()
+{
+	GooString *output=new GooString("");
+	output->appendf("</{0:s}>\n",tagName);	
+	return output;
+}
+
 // Line
 
 SVGLine::SVGLine()
@@ -414,6 +462,100 @@ GooString *SVGPath::dump()
 }
 
 
+// Path
+
+SVGRect::SVGRect()
+{
+}
+
+
+SVGRect::SVGRect(double ix, double iy,double iw, double ih, double stWidth,double stOp, int stR,int stG,int stB, double fiOp, GooString *fiRu, int fiR,int fiG,int fiB)
+{
+	x=ix;
+	y=iy;
+	width=iw;
+	height=ih;
+	strokeWidth=stWidth;
+	strokeOpacity=stOp;
+	strokeR=stR;
+	strokeG=stG;
+	strokeB=stB;
+	fillOpacity=fiOp;
+	fillRule=fiRu;
+	fillR=fiR;
+	fillG=fiG;
+	fillB=fiB;
+}
+
+SVGRect::~SVGRect()
+{
+	if(fillRule) delete fillRule;
+}
+
+GooString *SVGRect::dump()
+{
+	GooString *output=new GooString("");
+	
+//	if(matrix[0]!=1.0 || matrix[1]!=0.0 || matrix[2]!=0.0 || matrix[3]!=-1.0)
+//	{
+//	output->appendf("<path transform=\"matrix({0:d} {1:d} {2:d} {3:d} {4:.2f} {5:.2f})\"",(int)matrix[0],(int)matrix[1],(int)matrix[2],(int)matrix[3],pixel(matrix[4]),pixel(matrix[5]));
+//}
+//else
+//{
+	output->appendf("<rect ");	
+		output->appendf("x=\"{0:.2f}\" y=\"{1:.2f}\" width=\"{2:.2f}\" height=\"{3:.2f}\"",x,y,width,height);
+//}
+		if(fillR > -1 && fillG > -1 and fillB > -1) 
+		{
+			if(fillR==0 && fillG==0 && fillB==0)
+			{
+				output->append(" fill=\"black\"");
+			} 
+			else
+			{
+				output->appendf(" fill=\"#{0:x}{1:x}{2:x}\"",fillR,fillG,fillB);
+			}
+		}
+		else
+		{
+			output->append(" fill=\"none\"");
+		}
+
+			if(strokeR > -1 && strokeG > -1 and strokeB > -1) 
+			{
+				if(strokeR==0 && strokeG==0 && strokeB==0)
+				{
+					output->append(" stroke=\"black\"");
+				} 
+				else
+				{
+					output->appendf(" stroke=\"#{0:x}{1:x}{2:x}\"",strokeR,strokeG,strokeB);
+				}
+			}
+			else
+			{
+				output->append(" stroke=\"none\"");
+			}
+			
+		if(fillRule)
+			output->append(" fill-rule=\"nonzero\"");
+
+		if(fillOpacity)
+			output->appendf(" fill-opacity=\"{0:.2f}\"",fillOpacity);
+
+		if (strokeWidth)
+			output->appendf(" stroke-width=\"{0:.2f}\"",pixel(strokeWidth));
+
+		if(strokeOpacity)
+			output->appendf(" stroke-opacity=\"{0:.2f}\"",strokeOpacity);
+		
+	
+
+		output->append("/>\n");
+		return output;
+	
+}
+
 
 /* OutputDev */
 
@@ -549,7 +691,7 @@ void SVGOutputDev::drawImageMask(GfxState *state, Object *ref, Stream *str,
 	
   }
   else {
-    OutputDev::drawImageMask(state, ref, str, width, height, invert, inlineImg);
+//    OutputDev::drawImageMask(state, ref, str, width, height, invert, inlineImg);
   }
 }
 
@@ -754,8 +896,8 @@ void SVGOutputDev::drawImage(GfxState *state, Object *ref, Stream *str,
     delete imgnum;
     delete imgStr;
 #else
-    OutputDev::drawImage(state, ref, str, width, height, colorMap,
-                       maskColors, inlineImg);
+//    OutputDev::drawImage(state, ref, str, width, height, colorMap,
+ //                      maskColors, inlineImg);
 #endif
 
 
@@ -1203,7 +1345,7 @@ void SVGOutputDev::stroke(GfxState *state) {
 	int b=(int)(rgb.b/65535.0*255.0);
 	GooString *p=convertPath(matrix, path);
 	
-	if(!detectLine(state)) {
+	if(!detectLine(state) && !detectRect(state,0)) {
  		SVGPath *pt=new SVGPath(state->getLineWidth(),state->getStrokeOpacity(),r,g,b,state->getFillOpacity(),NULL,-1,-1,-1,p,matrix);
 		this->AddNode(pt);
 	}
@@ -1223,8 +1365,11 @@ void SVGOutputDev::fill(GfxState *state) {
 	b=(int)(rgb.b/65535.0*255.0);
 	GooString *p=convertPath(matrix, path);
 	
+	if(!detectLine(state) && !detectRect(state,1)) {
+	
 	SVGPath *pt=new SVGPath(NULL,NULL,-1,-1,-1,state->getFillOpacity(),new GooString("nonzero"),r,g,b,p,matrix);
 	this->AddNode(pt);
+	}
 }
 
 void SVGOutputDev::eofill(GfxState *state) {
@@ -1240,10 +1385,27 @@ void SVGOutputDev::eofill(GfxState *state) {
 	b=(int)(rgb.b/65535.0*255.0);
 	GooString *p=convertPath(matrix, path);
 		
+		if(!detectLine(state) && !detectRect(state,2)) {
+		
 	SVGPath *pt=new SVGPath(NULL,NULL,-1,-1,-1,state->getFillOpacity(),new GooString("evenodd"),r,g,b,p,matrix);
 	this->AddNode(pt);
-	
+	}
 }
+
+void SVGOutputDev::endMarkedContent(GfxState *state)
+{
+//	printf("<!-- endMarked -->\n");
+//	SVGEndNode *nd=new SVGEndNode(new GooString("g"));
+//	this->AddNode(nd);
+}
+void SVGOutputDev::beginMarkedContent(char *name, Dict *properties)
+{
+//	printf("<!-- beginMarked -->\n");
+
+//	SVGStartNode *nd=new SVGStartNode(new GooString("g"));
+//	this->AddNode(nd);	
+}
+
 
 void SVGOutputDev::transform(double *matrix,
                                    double xi, double yi,
@@ -1285,6 +1447,106 @@ bool SVGOutputDev::detectLine(GfxState *state)
 			this->AddNode(ln);
 			
 			return true;
+		}
+	}
+}
+	return false;
+	
+}
+
+
+bool SVGOutputDev::detectRect(GfxState *state, int t)
+{
+	
+	double *matrix=state->getCTM();
+	GfxPath *path=state->getPath();
+	GfxRGB frgb;
+	GfxRGB srgb;
+
+	int fr=0,fg=0,fb=0,sr=0,sg=0,sb=0;
+	state->getFillRGB(&frgb);
+	fr=(int)(frgb.r/65535.0*255.0);
+	fg=(int)(frgb.g/65535.0*255.0);
+	fb=(int)(frgb.b/65535.0*255.0);
+	state->getStrokeRGB(&srgb);
+	sr=(int)(srgb.r/65535.0*255.0);
+	sg=(int)(srgb.g/65535.0*255.0);
+	sb=(int)(srgb.b/65535.0*255.0);
+	
+	
+		if(path->getNumSubpaths()==1)
+		{
+		GfxSubpath * subpath = path->getSubpath( 0 );
+	
+	if(subpath->getNumPoints() == 5)
+	{
+		double x0,y0;
+		transform(matrix,subpath->getX(0),subpath->getY(0),&x0,&y0);
+		
+		if(!subpath->getCurve(1) && !subpath->getCurve(2) && !subpath->getCurve(3) && !subpath->getCurve(4))
+		{
+			double x1,y1,x2,y2,x3,y3,x4,y4;
+			transform(matrix,subpath->getX(1),subpath->getY(1),&x1,&y1);
+			transform(matrix,subpath->getX(2),subpath->getY(2),&x2,&y2);
+			transform(matrix,subpath->getX(3),subpath->getY(3),&x3,&y3);
+			transform(matrix,subpath->getX(4),subpath->getY(4),&x4,&y4);
+
+			if((x0==x1 || y0==y1) && (x1==x2 || y1==y2) && (x2==x3 || y2==y3) && (x3==x4 || y3==y4))
+			{
+				double width=0, height=0;
+				if(x0<x1)
+				{
+					width=abs(x1-x0);
+				}	else			
+				{
+					height=abs(y1-y0);					
+				}
+				if(x1<x2)
+				{
+					width=abs(x2-x1);
+				} else
+				{
+					height=abs(y2-y1);					
+				}
+				
+				if (x1 < x0)
+					x0=x1;
+				if (x2 < x0)
+					x0=x2;
+				if (x3 < x0)
+					x0=x3;
+				if (x4 < x0)
+					x0=x4;
+				if (y1 < y0)
+					y0=y1;
+				if (y2 < y0)
+					y0=y2;
+				if (y3 < y0)
+					y0=y3;
+				if (y4 < y0)
+					y0=y4;
+					
+				
+				SVGRect *pt;
+				switch(t) {
+				case 0:
+					pt=new SVGRect(x0,y0,width,height,state->getLineWidth(),state->getStrokeOpacity(),sr,sg,sb,NULL,NULL,-1,-1,-1);
+					break;
+					case 1:
+					pt=new SVGRect(x0,y0,width,height,NULL,NULL,-1,-1,-1,state->getFillOpacity(),new GooString("nonzero"),fr,fg,fb);
+					break;
+					case 2:
+					pt=new SVGRect(x0,y0,width,height,NULL,NULL,-1,-1,-1,state->getFillOpacity(),new GooString("evenodd"),fr,fg,fb);
+					break;
+
+				}
+				this->AddNode(pt);
+				
+				return true;
+			}
+
+			
+			return false;
 		}
 	}
 }
@@ -1341,7 +1603,7 @@ GooString *SVGOutputDev::convertPath( double *matrix,GfxPath *path )
 }
 
 
-void SVGOutputDev::updateFont(GfxState *state) {
+void SVGOutputDev::generateFont(GfxState *state) {
 //	curFont=state->getFont();
 
 	Ref embRef;

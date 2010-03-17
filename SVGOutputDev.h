@@ -67,6 +67,27 @@ public:
 	virtual GooString *dump()=0;
 };
 
+class SVGStartNode : public SVGNode{
+private:
+	GooString *tagName;
+public:
+	SVGStartNode(GooString *t);
+	SVGStartNode();
+	~SVGStartNode();
+	GooString *dump();
+};
+
+class SVGEndNode : public SVGNode{
+private:
+	GooString *tagName;
+public:
+	SVGEndNode(GooString *t);
+	SVGEndNode();
+	~SVGEndNode();
+	GooString *dump();
+};
+
+
 class SVGImage : public SVGNode{
 private:
 	double x,y,width,height;
@@ -116,6 +137,24 @@ public:
 	SVGLine(double ix1, double iy1, double ix2, double iy2, double stWidth,double stOp, int stR,int stG,int stB);
 	SVGLine();
 	~SVGLine();
+	GooString *dump();
+
+};
+
+class SVGRect : public SVGNode{
+private:
+	int fillR,fillG,fillB;
+	int strokeR,strokeG,strokeB;
+	GooString *fillRule;
+	double x,y,width,height;
+	double strokeWidth;
+	double fillOpacity;
+	double strokeOpacity;
+
+public:
+	SVGRect(double ix, double iy,double iw, double ih,double stWidth,double stOp, int stR,int stG,int stB, double fiOp, GooString *fiRu, int fiR,int fiG,int fiB);
+	SVGRect();
+	~SVGRect();
 	GooString *dump();
 
 };
@@ -186,6 +225,10 @@ public:
   virtual void fill(GfxState *state);
   virtual void eofill(GfxState *state);
 
+
+  virtual void endMarkedContent(GfxState *state);
+  virtual void beginMarkedContent(char *name, Dict *properties);
+
 // TODO
 /*
 	virtual void clip(GfxState *state);
@@ -195,6 +238,7 @@ public:
 */
 GooString *convertPath( double *matrix, GfxPath *path );
 bool detectLine(GfxState *state);
+bool detectRect(GfxState *state, int t);
 
 void transform(double *matrix,
                                    double xi, double yi,
@@ -224,7 +268,7 @@ void transform(double *matrix,
 
 	int AddNode(SVGNode* node);
 
-  void updateFont(GfxState *state);
+  void generateFont(GfxState *state);
 private:
 	void closeText();
 	
