@@ -196,7 +196,7 @@ public:
   virtual GBool upsideDown() { return gTrue; }
 
   // Does this device use drawChar() or drawString()?
-  virtual GBool useDrawChar() { return gFalse; }
+  virtual GBool useDrawChar() { return gTrue; }
 
   virtual void drawImageMask(GfxState *state, Object *ref, 
 			     Stream *str,
@@ -221,6 +221,10 @@ public:
 	virtual void startPage( int pageNum, GfxState *state );
   virtual void endPage();
   virtual void drawString( GfxState * state, GooString * s );
+  virtual void drawChar(GfxState *state, double x, double y,
+			double dx, double dy,
+			double originX, double originY,
+			CharCode code, int nBytes, Unicode *u, int uLen);
 
   virtual void stroke(GfxState *state);
   virtual void fill(GfxState *state);

@@ -192,7 +192,7 @@ void SVGText::addStr(GooString *s)
 GooString *SVGText::dump()
 {
 	GooString *output=new GooString("");
-
+//	output->appendf("<!-- {0:.2f} {1:.2f} {2:.2f} {3:.2f} ({4:.2f} {5:.2f}) -->",xMin,yMin,xMax,yMax,(xMax-xMin),(yMax-yMin));
 	output->appendf("<text x=\"{0:.2f}\" y=\"{1:.2f}\"",pixel(x),pixel(y));
 //	if(str->cmp(" ")!=0)
 //	{
@@ -200,6 +200,7 @@ GooString *SVGText::dump()
 //	}
 		output->appendf(" textLength=\"{0:.2f}\"",textW);
 		
+
 	if(wordSpace !=0)
 		output->appendf(" word-spacing=\"{0:.2f}\"",pixel(fontSize * wordSpace));
 	if(charSpace !=0)
@@ -220,7 +221,7 @@ GooString *SVGText::dump()
 			output->appendf(" fill=\"#{0:x}{1:x}{2:x}\"",r,g,b);
 	}
 //	output->appendf(" font-size=\"{0:.2f}\" stroke=\"none\">",pixel(fontSize));
-	output->appendf(" font-size=\"{0:d}\" stroke=\"none\">",(int)fontSize);
+	output->appendf(" font-size=\"{0:.2f}\" stroke=\"none\">",fontSize);
 
 //		output->appendf("{0:s}",str);
 		output->append(str);
@@ -1075,6 +1076,109 @@ void SVGOutputDev::closeText()
 	}
 }
 
+void SVGOutputDev::drawChar(GfxState *state, double x, double y,
+	      double dx, double dy,
+	      double originX, double originY,
+	      CharCode code, int /*nBytes*/, Unicode *u, int uLen) 
+{
+	GfxRGB rgb;	
+	double cx = state->getCurX(),cy=state->getCurY();
+	double *matrix=state->getCTM();
+	GooString *fntFamily=state->getFont()->getName()->copy();
+	state->getFillRGB(&rgb);
+	int r=0,g=0,b=0;
+	r=(int)(rgb.r/65535.0*255.0);
+	g=(int)(rgb.g/65535.0*255.0);
+	b=(int)(rgb.b/65535.0*255.0);
+
+	int rotate;
+	
+	int i;
+	for(i=0;i<fntFamily->getLength();i++)
+	{
+		if(fntFamily->getChar(i)=='+')
+		{
+			break;
+		}
+	}
+	if(i < fntFamily->getLength()-1)
+	{
+		fntFamily->del(0,i+1);
+	}
+	
+	state->textTransform( x, y, &x, &y );
+	state->transform( x, y, &x, &y );
+
+	state->transform( cx, cy, &cx, &cy );
+//	state->transform( dx, dy, &dx, &dy );
+	
+//	if(curTxt)
+//		printf("%s %.2f %.2f %.2f %.2f %.2f\n",curTxt->getStr()->getCString(),startX,cx,x,dx,state->getWordSpace());
+	
+	if(curTxt
+		&& lineY==y 
+		&& fontSize==state->getTransformedFontSize() 
+		&& fontFamily->cmp(fntFamily) == 0  
+//		&& charSpace==state->getCharSpace() 
+//		&& wordSpace==state->getWordSpace()
+		&& cx < curTxt->xMax + 3.0
+		)
+	{
+		curTxt->addStr(uconv(u,uLen));
+		curTxt->xMax=curTxt->xMax+dx - (state->getCharSpace() * state->getHorizScaling());
+		curTxt->yMax=curTxt->yMax+dy;
+		curTxt->setTextWidth(curTxt->xMax - curTxt->xMin);
+//		startX=cx+curTxt->xMax;
+		
+	}
+	else
+	{
+//		startX=cx;
+		
+		 double *fontm;
+		 double m[4], m2[4];
+		 int rot;
+		 state->getFontTransMat(&m[0], &m[1], &m[2], &m[3]);
+
+		  if (curFont && curFont->getType() == fontType3) {
+		    fontm = state->getFont()->getFontMatrix();
+		    m2[0] = fontm[0] * m[0] + fontm[1] * m[2];
+		    m2[1] = fontm[0] * m[1] + fontm[1] * m[3];
+		    m2[2] = fontm[2] * m[0] + fontm[3] * m[2];
+		    m2[3] = fontm[2] * m[1] + fontm[3] * m[3];
+		    m[0] = m2[0];
+		    m[1] = m2[1];
+		    m[2] = m2[2];
+		    m[3] = m2[3];
+		  }
+		  if (fabs(m[0] * m[3]) > fabs(m[1] * m[2])) {
+		    rot = (m[3] < 0) ? 0 : 2;
+		  } else {
+		    rot = (m[2] > 0) ? 1 : 3;
+		  }
+		
+			fontSize=state->getTransformedFontSize();
+			fontFamily=fntFamily;
+		
+		
+		SVGText *txt=new SVGText(cx,cy,state->getTransformedFontSize(),fntFamily,0,0,rot,r,g,b);
+		this->AddNode(txt);
+		curTxt=txt;
+		curTxt->addStr(uconv(u,uLen));
+		
+		curTxt->xMin=cx;
+		curTxt->yMin=cy;
+		curTxt->xMax=cx+dx - (state->getCharSpace() * state->getHorizScaling());
+		curTxt->yMax=cy+dy;
+		curTxt->setTextWidth(curTxt->xMax - curTxt->xMin);
+		
+		startX=cx + (curTxt->xMax - curTxt->xMin);
+		
+	}
+	lineY=y;	
+	
+}
+
 void SVGOutputDev::drawString( GfxState * state, GooString * s )
 {
 	GfxRGB rgb;
@@ -1111,6 +1215,7 @@ void SVGOutputDev::drawString( GfxState * state, GooString * s )
 	}
 
 	double totw=0;
+	double toth=0;
 
 	state->textTransform( x, y, &x, &y );
 	state->transform( x, y, &x, &y );
@@ -1149,7 +1254,7 @@ void SVGOutputDev::drawString( GfxState * state, GooString * s )
 		len -= n;
 		str = (Unicode *)grealloc(str, (size) * sizeof(Unicode));
 		str[slen]=*u;
-		totw+=dx;
+
 		double ws=0;
 		double cs=state->getCharSpace();
 
@@ -1159,11 +1264,17 @@ void SVGOutputDev::drawString( GfxState * state, GooString * s )
 			ws=state->getWordSpace();
 		}
 
+
+		totw+=(dx + cs + ws)*state->getTransformedFontSize();
+		totw-=(state->getCharSpace() * state->getHorizScaling());
+		toth+=dy;
+		
+//		state->transformDelta(totw,toth,&totw,&toth);
+//		tw=state->transformWidth(totw);
+
 		textWidth+=(dx + cs + ws)*state->getTransformedFontSize();
 //					printf("DEBUG: %d %s %.2f %.2f %.2f %.2f = %.2f\n",slen,u,dx,dy,originX,originY,textWidth);
-
-//			printf("DEBUG: %s %.2f %.2f %.2f %.2f = %.2f\n",u,dx,dy,originX,originY,textWidth);
-//	       str += QChar( *u );
+//		printf("DEBUG: %s %d %.2f %.2f %.2f %.2f %.2f %.2f %.2f = %.2f\n",u,uLen,dx,dy,originX,originY,state->getTransformedFontSize(),state->getHorizScaling(),totw,textWidth);
 		width+=originX;
 		slen+=1;
 	}	
@@ -1208,6 +1319,8 @@ void SVGOutputDev::drawString( GfxState * state, GooString * s )
 	)
 //	if(false)
 	{	
+			curTxt->xMax=curTxt->xMax+totw;
+			curTxt->yMax=curTxt->yMax+toth;
 				
 				curTxt->addStr(uconv(str,slen));
 				curTxt->setTextWidth(textWidth);
@@ -1311,6 +1424,9 @@ void SVGOutputDev::drawString( GfxState * state, GooString * s )
 		curTxt=txt;
 		curTxt->xMin=cx;
 		curTxt->yMin=cy;
+		curTxt->xMax=cx+totw;
+		curTxt->yMax=cy+toth;
+
 		curTxt->addStr(uconv(str,slen));
 		curTxt->setTextWidth(textWidth);
 		startX=cx+textWidth;
