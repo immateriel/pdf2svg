@@ -1134,7 +1134,7 @@ void SVGOutputDev::drawChar(GfxState *state, double x, double y,
 //	state->transform( dx, dy, &dx, &dy );
 	
 //	if(curTxt)
-//		printf("%s %.2f %.2f %.2f %.2f %.2f\n",curTxt->getStr()->getCString(),startX,cx,x,dx,state->getWordSpace());
+//		printf("%s %.2f %.2f %.2f %.2f %.2f %.2f\n",curTxt->getStr()->getCString(),state->getCharSpace(),state->getWordSpace(),curTxt->spaceSize,curTxt->xMax,cx,curTxt->xMax + (curTxt->spaceSize)*1.5);
 	
 	if(curTxt
 		&& lineY==y 
@@ -1142,7 +1142,7 @@ void SVGOutputDev::drawChar(GfxState *state, double x, double y,
 		&& fontFamily->cmp(fntFamily) == 0  
 //		&& charSpace==state->getCharSpace() 
 //		&& wordSpace==state->getWordSpace()
-		&& cx < curTxt->xMax + (curTxt->spaceSize*fontSize)*1.5
+		&& cx < curTxt->xMax + (curTxt->spaceSize)*1.5 
 		)
 	{
 		curTxt->addStr(uconv(u,uLen));
@@ -1196,7 +1196,12 @@ void SVGOutputDev::drawChar(GfxState *state, double x, double y,
 		curTxt->setTextWidth(curTxt->xMax - curTxt->xMin);
 		
 		startX=cx + (curTxt->xMax - curTxt->xMin);
-		curTxt->spaceSize=getSpaceSize(curFont);
+		curTxt->spaceSize=(getSpaceSize(curFont) - state->getCharSpace())*fontSize;		
+
+		if(curTxt->spaceSize==0)
+		{
+			curTxt->spaceSize=2.0;
+		}
 		
 		double *bbox=curFont->getFontBBox();
 		double tmpx,tmpy;
@@ -1277,9 +1282,9 @@ double SVGOutputDev::getSpaceSize(GfxFont *font)
 	int n = font->getNextChar(p, len, &code, &u, &uLen, &dx, &dy, &originX, &originY);
 //	printf("%.2f\n",dx*font->getSize());
 	
-	if(dx==0)
-		return 2.0;
-	else
+//	if(dx==0)
+//		return 2.0;
+//	else
 		return dx;
 }
 
