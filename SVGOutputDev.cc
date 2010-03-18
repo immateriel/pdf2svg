@@ -230,7 +230,7 @@ GooString *SVGText::dump()
 	} 
 	else
 	{
-			output->appendf(" fill=\"#{0:x}{1:x}{2:x}\"",r,g,b);
+			output->appendf(" fill=\"rgb({0:d},{1:d},{2:d})\"",r,g,b);
 	}
 //	output->appendf(" font-size=\"{0:.2f}\" stroke=\"none\">",pixel(fontSize));
 	output->appendf(" font-size=\"{0:.2f}\" stroke=\"none\">",fontSize);
@@ -355,7 +355,7 @@ GooString *SVGLine::dump()
 		} 
 		else
 		{
-			output->appendf(" stroke=\"#{0:x}{1:x}{2:x}\"",strokeR,strokeG,strokeB);
+			output->appendf(" stroke=\"rgb({0:d},{1:d},{2:d})\"",strokeR,strokeG,strokeB);
 		}
 	}
 	else
@@ -430,7 +430,7 @@ GooString *SVGPath::dump()
 			} 
 			else
 			{
-				output->appendf(" fill=\"#{0:x}{1:x}{2:x}\"",fillR,fillG,fillB);
+				output->appendf(" fill=\"rgb({0:d},{1:d},{2:d})\"",fillR,fillG,fillB);
 			}
 		}
 		else
@@ -446,7 +446,7 @@ GooString *SVGPath::dump()
 				} 
 				else
 				{
-					output->appendf(" stroke=\"#{0:x}{1:x}{2:x}\"",strokeR,strokeG,strokeB);
+					output->appendf(" stroke=\"rgb({0:d},{1:d},{2:d})\"",strokeR,strokeG,strokeB);
 				}
 			}
 			else
@@ -526,7 +526,7 @@ GooString *SVGRect::dump()
 			} 
 			else
 			{
-				output->appendf(" fill=\"#{0:x}{1:x}{2:x}\"",fillR,fillG,fillB);
+				output->appendf(" fill=\"rgb({0:d},{1:d},{2:d})\"",fillR,fillG,fillB);
 			}
 		}
 		else
@@ -542,7 +542,7 @@ GooString *SVGRect::dump()
 				} 
 				else
 				{
-					output->appendf(" stroke=\"#{0:x}{1:x}{2:x}\"",strokeR,strokeG,strokeB);
+					output->appendf(" stroke=\"rgb({0:d},{1:d},{2:d})\"",strokeR,strokeG,strokeB);
 				}
 			}
 			else
@@ -1747,7 +1747,7 @@ bool SVGOutputDev::detectRect(GfxState *state, int t)
 					case 1:
 					pt=new SVGRect(x0,y0,width,height,NULL,NULL,-1,-1,-1,state->getFillOpacity(),new GooString("nonzero"),fr,fg,fb);
 					
-//									pt=new SVGRect(x0,y0,width,height,state->getLineWidth(),state->getStrokeOpacity(),sr,sg,sb,state->getFillOpacity(),new GooString("nonzero"),fr,fg,fb);
+//									pt=new SVGRect(x0,y0,width,height,state->getLineWidth(),state->getStrokeOpacity(),255,0,0,state->getFillOpacity(),new GooString("nonzero"),fr,fg,fb);
 					break;
 					case 2:
 					pt=new SVGRect(x0,y0,width,height,NULL,NULL,-1,-1,-1,state->getFillOpacity(),new GooString("evenodd"),fr,fg,fb);
