@@ -52,15 +52,26 @@ GooString *SVGFont::dump()
 	GooString *output=new GooString("");
 
 //	output->appendf("<font>");
-	output->appendf("<font-face font-family=\"{0:s}\" ascent=\"{1:.2f}\" descent=\"{2:.2f}\" font-style=\"{3:s}\" font-weight=\"{4:s}\"/>\n",name,ascent,descent,style->getCString(),weight->getCString());
-//	output->appendf("<font-face-src>\n");
-//	output->appendf("<font-face-uri xlink:href=\"{0:s}.pfa\"/>\n",name->getCString());
-
-//	output->appendf("</font-face-src>\n");
-
-//	output->appendf("</font-face>\n");
+/*
+	output->appendf("<font-face font-family=\"{0:s}\" ascent=\"{1:.2f}\" descent=\"{2:.2f}\" font-style=\"{3:s}\" font-weight=\"{4:s}\">\n",name,ascent,descent,style->getCString(),weight->getCString());
+	output->appendf("<font-face-src>");
+	output->appendf("<font-face-uri xlink:href=\"{0:s}.ttf\"/>",name->getCString());
+	output->appendf("</font-face-src>\n");
+	output->appendf("</font-face>\n");
+*/
 
 //	output->appendf("</font>\n");
+/*
+	output->append("@font-face { \n");
+	output->appendf(" font-family:\"{0:s}\";\n",name->getCString());
+	output->appendf(" font-weight:{0:s};\n",weight->getCString());
+	output->appendf(" font-style:{0:s};\n",style->getCString());
+
+	output->appendf(" src: url(\"{0:s}.ttf\");\n",name->getCString());
+
+	output->appendf("}\n");
+	*/
+
 	return output;
 	
 }
@@ -611,9 +622,10 @@ int SVGOutputDev::AddNode(SVGNode* node){
 }
 
 
-void SVGOutputDev::drawImageMask(GfxState *state, Object *ref, Stream *str,
-			      int width, int height, GBool invert,
-			      GBool inlineImg) {
+void SVGOutputDev::drawImageMask(GfxState *state, Object *ref,
+                             Stream *str,
+                             int width, int height, GBool invert,
+                             GBool interpolate, GBool inlineImg) {
 
   FILE *f1;
   int c;
@@ -692,14 +704,14 @@ void SVGOutputDev::drawImageMask(GfxState *state, Object *ref, Stream *str,
 	
   }
   else {
-//    OutputDev::drawImageMask(state, ref, str, width, height, invert, inlineImg);
+   OutputDev::drawImageMask(state, ref, str, width, height, invert,interpolate, inlineImg);
   }
 }
 
 void SVGOutputDev::drawImage(GfxState *state, Object *ref, Stream *str,
-			  int width, int height, GfxImageColorMap *colorMap,
-			  int *maskColors, GBool inlineImg) {
-
+                       int width, int height, GfxImageColorMap *colorMap,
+                       GBool interpolate, int *maskColors, GBool inlineImg) 
+{
 
   FILE *f1;
   int c;
@@ -897,8 +909,8 @@ void SVGOutputDev::drawImage(GfxState *state, Object *ref, Stream *str,
     delete imgnum;
     delete imgStr;
 #else
-//    OutputDev::drawImage(state, ref, str, width, height, colorMap,
- //                      maskColors, inlineImg);
+    OutputDev::drawImage(state, ref, str, width, height, colorMap,interpolate,
+                       maskColors, inlineImg);
 #endif
 
 
@@ -906,6 +918,7 @@ void SVGOutputDev::drawImage(GfxState *state, Object *ref, Stream *str,
 
 }
 
+/*
 void SVGOutputDev::drawMaskedImage(
   GfxState *state, Object *ref, Stream *str,
   int width, int height, GfxImageColorMap *colorMap,
@@ -928,7 +941,7 @@ void SVGOutputDev::drawSoftMaskedImage(
 
 
 }
-
+*/
 
  void SVGOutputDev::dumpContent()
 {
@@ -938,8 +951,9 @@ void SVGOutputDev::drawSoftMaskedImage(
 	printf("<svg version=\"1.2\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" xml:id=\"svg-root\" width=\"%d\" height=\"%d\" viewBox=\"%d %d %d %d\" xmlns=\"http://www.w3.org/2000/svg\">\n",
 	(int)pixel(curPageWidth),(int)pixel(curPageHeight),(int)pixel(this->cropBox->x1),(int)pixel(this->cropBox->y1),(int)pixel(this->cropBox->x2 - this->cropBox->x1),(int)pixel(this->cropBox->y2 - this->cropBox->y1));
 	printf("<defs>\n");
-	printf("%s",fonts->dump()->getCString());
 //	printf("<style>\n");
+
+	printf("%s",fonts->dump()->getCString());
 	
 //	printf("</style>\n");
 	printf("</defs>\n");
@@ -1090,8 +1104,14 @@ void SVGOutputDev::drawChar(GfxState *state, double x, double y,
 	r=(int)(rgb.r/65535.0*255.0);
 	g=(int)(rgb.g/65535.0*255.0);
 	b=(int)(rgb.b/65535.0*255.0);
-
+/*	GfxPath *path=state->getPath();
+	GooString *p=convertPath(matrix, path);
+	printf("%s : %s\n",u,p->getCString());
+*/
 	int rotate;
+	
+	curFont=state->getFont();
+	
 	
 	int i;
 	for(i=0;i<fntFamily->getLength();i++)
@@ -1125,7 +1145,8 @@ void SVGOutputDev::drawChar(GfxState *state, double x, double y,
 		)
 	{
 		curTxt->addStr(uconv(u,uLen));
-		curTxt->xMax=curTxt->xMax+dx - (state->getCharSpace() * state->getHorizScaling());
+		curTxt->xMax=curTxt->xMax+dx;
+		// - (state->getCharSpace() * state->getHorizScaling());
 		curTxt->yMax=curTxt->yMax+dy;
 		curTxt->setTextWidth(curTxt->xMax - curTxt->xMin);
 //		startX=cx+curTxt->xMax;
@@ -1168,12 +1189,60 @@ void SVGOutputDev::drawChar(GfxState *state, double x, double y,
 		
 		curTxt->xMin=cx;
 		curTxt->yMin=cy;
-		curTxt->xMax=cx+dx - (state->getCharSpace() * state->getHorizScaling());
+		curTxt->xMax=cx+dx;
+		// - (state->getCharSpace() * state->getHorizScaling());
 		curTxt->yMax=cy+dy;
 		curTxt->setTextWidth(curTxt->xMax - curTxt->xMin);
 		
 		startX=cx + (curTxt->xMax - curTxt->xMin);
 		
+		GooString *style=new GooString("normal");
+		GooString *weight=new GooString("");
+		
+		if(curFont->isItalic())
+		{
+			style=new GooString("italic");
+		}
+		
+		
+		switch(curFont->getWeight())
+		{
+			case GfxFont::W100:
+			weight=new GooString("100");
+			break;
+			case GfxFont::W200:
+			weight=new GooString("200");
+			break;
+			case GfxFont::W300:
+			weight=new GooString("300");
+			break;
+			case GfxFont::W400:
+			weight=new GooString("normal");
+			break;
+			case GfxFont::W500:
+			weight=new GooString("500");
+			break;
+			case GfxFont::W600:
+			weight=new GooString("600");
+			break;
+			case GfxFont::W700:
+			weight=new GooString("bold");
+			break;
+			case GfxFont::W800:
+			weight=new GooString("800");
+			break;
+			case GfxFont::W900:
+			weight=new GooString("900");
+			break;
+
+
+			default: 
+			weight=new GooString("normal");
+			break;
+		}
+		
+		SVGFont fnt=SVGFont(fntFamily,curFont->getAscent(),curFont->getDescent(),style,weight);
+		fonts->AddFont(fnt);
 	}
 	lineY=y;	
 	
@@ -1561,7 +1630,6 @@ bool SVGOutputDev::detectLine(GfxState *state)
 
 bool SVGOutputDev::detectRect(GfxState *state, int t)
 {
-	
 	double *matrix=state->getCTM();
 	GfxPath *path=state->getPath();
 	GfxRGB frgb;
@@ -1638,6 +1706,8 @@ bool SVGOutputDev::detectRect(GfxState *state, int t)
 					break;
 					case 1:
 					pt=new SVGRect(x0,y0,width,height,NULL,NULL,-1,-1,-1,state->getFillOpacity(),new GooString("nonzero"),fr,fg,fb);
+					
+//									pt=new SVGRect(x0,y0,width,height,state->getLineWidth(),state->getStrokeOpacity(),sr,sg,sb,state->getFillOpacity(),new GooString("nonzero"),fr,fg,fb);
 					break;
 					case 2:
 					pt=new SVGRect(x0,y0,width,height,NULL,NULL,-1,-1,-1,state->getFillOpacity(),new GooString("evenodd"),fr,fg,fb);
@@ -1723,6 +1793,20 @@ void SVGOutputDev::generateFont(GfxState *state) {
 //			fntname=curFont->getName();
 //		}
 
+		int i;
+		for(i=0;i<fntname->getLength();i++)
+		{
+			if(fntname->getChar(i)=='+')
+			{
+				break;
+			}
+		}
+		if(i < fntname->getLength()-1)
+		{
+			fntname->del(0,i+1);
+		}
+
+//		printf("%x\n",curFont->getType());
 //		SVGFont *tmpfnt=new SVGFont(fntname->copy());
 			
 //		if(!fonts->isFont(*tmpfnt)) {
@@ -1734,13 +1818,25 @@ void SVGOutputDev::generateFont(GfxState *state) {
 			GooString *filename=fntname->copy();
 			filename->append(".pfa");
 
+/*
+			filename->append(".ttf");
+			printf("%s\n",filename->getCString());
+			FILE *outputStream;
+			outputStream=fopen (filename->getCString(), "wb");
+			FoFiType1C *ttf = FoFiType1C::make(tmpBuf, tmpBufLen);
+			ttf->writeTTF(NULL,outputStream,fntname->getCString(),NULL);
+			fclose(outputStream);
+*/
+			//FoFiOutputFunc outputFunc, void *outputStream,
+			  //              char *name = NULL, Gushort *codeToGID = NULL);
+			
+
 			f=fopen (filename->getCString(), "wb");
-//	fprintf(f,tmpBuf);
 			for (cur_char = 0; cur_char < tmpBufLen; ++cur_char) {
 				fputc(tmpBuf[cur_char], f);
 			}
 			fclose (f);
-			
+	
 //			printf("%s\n",filename);
 			
 //			fonts->AddFont(*tmpfnt);

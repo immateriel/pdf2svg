@@ -14,6 +14,8 @@
 #include "GfxState.h"
 #include "Page.h"
 #include "OutputDev.h"
+#include "fofi/FoFiTrueType.h"
+#include "fofi/FoFiType1C.h"
 
 #define xoutRound(x) ((int)(x + 0.5))
 
@@ -198,13 +200,25 @@ public:
   // Does this device use drawChar() or drawString()?
   virtual GBool useDrawChar() { return gTrue; }
 
+/*
   virtual void drawImageMask(GfxState *state, Object *ref, 
 			     Stream *str,
 			     int width, int height, GBool invert,
-			     GBool inlineImg);
-  virtual void drawImage(GfxState *state, Object *ref, Stream *str,
+			     GBool inlineImg); */
+				virtual void drawImageMask(GfxState *state, Object *ref,
+				                             Stream *str,
+				                             int width, int height, GBool invert,
+				                             GBool interpolate, GBool inlineImg);
+/*  virtual void drawImage(GfxState *state, Object *ref, Stream *str,
 			  int width, int height, GfxImageColorMap *colorMap,
 			 int *maskColors, GBool inlineImg);
+	*/
+	  virtual void drawImage(GfxState *state, Object *ref, Stream *str,
+	                         int width, int height, GfxImageColorMap *colorMap,
+	                         GBool interpolate, int *maskColors, GBool inlineImg);
+
+			
+/*			
   virtual void drawMaskedImage(GfxState *state, Object *ref, Stream *str,
 			       int width, int height,
 			       GfxImageColorMap *colorMap,
@@ -216,7 +230,7 @@ public:
 				   Stream *maskStr,
 				   int maskWidth, int maskHeight,
 				   GfxImageColorMap *maskColorMap);
-
+*/
 
 	virtual void startPage( int pageNum, GfxState *state );
   virtual void endPage();
