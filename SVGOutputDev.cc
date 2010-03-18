@@ -33,13 +33,14 @@ double pixel(double pt)
 }
 
 /* FONT */
-SVGFont::SVGFont(GooString *nm, double a, double d, GooString *s, GooString *w)
+SVGFont::SVGFont(GooString *nm, double a, double d, GooString *s, GooString *w, GooString *st)
 {
 	name=nm;
 	ascent=a;
 	descent=d;
 	style=s;
 	weight=w;
+	stretch=st;
 
 }
 SVGFont::SVGFont()
@@ -52,13 +53,14 @@ GooString *SVGFont::dump()
 	GooString *output=new GooString("");
 
 //	output->appendf("<font>");
-/*
-	output->appendf("<font-face font-family=\"{0:s}\" ascent=\"{1:.2f}\" descent=\"{2:.2f}\" font-style=\"{3:s}\" font-weight=\"{4:s}\">\n",name,ascent,descent,style->getCString(),weight->getCString());
-	output->appendf("<font-face-src>");
+
+	output->appendf("<font-face font-family=\"{0:s}\" ascent=\"{1:.2f}\" descent=\"{2:.2f}\" font-style=\"{3:s}\" font-weight=\"{4:s}\" font-stretch=\"{5:s}\"/>\n",name,ascent,descent,style->getCString(),weight->getCString(),stretch->getCString());
+/*	output->appendf("<font-face-src>");
 	output->appendf("<font-face-uri xlink:href=\"{0:s}.ttf\"/>",name->getCString());
 	output->appendf("</font-face-src>\n");
-	output->appendf("</font-face>\n");
 */
+//	output->appendf("</font-face>\n");
+
 
 //	output->appendf("</font>\n");
 /*
@@ -474,8 +476,35 @@ GooString *SVGPath::dump()
 	
 }
 
+// ClipPath
+SVGClipPath::SVGClipPath()
+{
+}
 
-// Path
+SVGClipPath::SVGClipPath(double stWidth,double stOp, int stR,int stG,int stB, double fiOp, GooString *fiRu, int fiR,int fiG,int fiB, GooString *p, double *mat)
+{
+	path=new SVGPath(stWidth,stOp,  stR, stG, stB,  fiOp, fiRu,  fiR, fiG, fiB, p, mat);
+}
+
+
+SVGClipPath::~SVGClipPath()
+{
+}
+
+
+GooString *SVGClipPath::dump()
+{
+		GooString *output=new GooString("");
+		output->append("<clipPath>\n");
+		output->append(" ");
+
+		output->append(path->dump());
+		output->append("</clipPath>\n");
+
+	return output;
+}
+
+// Rect
 
 SVGRect::SVGRect()
 {
@@ -1212,9 +1241,11 @@ void SVGOutputDev::drawChar(GfxState *state, double x, double y,
 //		state->transform(bbox[2],bbox[3],&tmpx,&tmpy);
 		curTxt->yMax=cy+(bbox[3]*state->getTransformedFontSize());
 
-		/*
+		
 		GooString *style=new GooString("normal");
-		GooString *weight=new GooString("");
+		GooString *weight=new GooString("normal");
+		
+		GooString *stretch=new GooString("normal");
 		
 		if(curFont->isItalic())
 		{
@@ -1254,13 +1285,72 @@ void SVGOutputDev::drawChar(GfxState *state, double x, double y,
 
 
 			default: 
-			weight=new GooString("normal");
+			if(curFont->isBold())
+			{
+				weight=new GooString("bold");
+			}
+			else
+			{
+				weight=new GooString("normal");
+			}
 			break;
 		}
 		
-		SVGFont fnt=SVGFont(fntFamily,curFont->getAscent(),curFont->getDescent(),style,weight);
+		switch(curFont->getStretch())
+		{
+			      case GfxFont::StretchNotDefined:
+						stretch=new GooString("normal");
+						break;
+
+		        case GfxFont::UltraCondensed:
+						stretch=new GooString("ultra-condensed");
+						break;
+
+		        case GfxFont::ExtraCondensed:
+
+						stretch=new GooString("extra-condensed");
+						break;
+
+		        case GfxFont::Condensed:
+						stretch=new GooString("condensed");
+		
+						break;
+
+		        case GfxFont::SemiCondensed:
+						stretch=new GooString("semi-condensed");
+		
+						break;
+
+		        case GfxFont::Normal:
+						stretch=new GooString("normal");
+		
+						break;
+
+		        case GfxFont::SemiExpanded:
+						stretch=new GooString("semi-expandend");
+		
+						break;
+
+						case GfxFont::Expanded:
+						stretch=new GooString("expanded");
+						
+						break;
+
+		        case GfxFont::ExtraExpanded:
+						stretch=new GooString("extra-expanded");
+		
+						break;
+
+		        case GfxFont::UltraExpanded:
+						stretch=new GooString("ultra-expanded");
+
+						break;
+		  
+		}
+		
+		SVGFont fnt=SVGFont(fntFamily,curFont->getAscent(),curFont->getDescent(),style,weight,stretch);
 		fonts->AddFont(fnt);
-		*/
+		
 	}
 	lineY=y;	
 	
@@ -1526,8 +1616,8 @@ void SVGOutputDev::drawString( GfxState * state, GooString * s )
 			break;
 		}
 		
-		SVGFont fnt=SVGFont(fntFamily,curFont->getAscent(),curFont->getDescent(),style,weight);
-		fonts->AddFont(fnt);
+//		SVGFont fnt=SVGFont(fntFamily,curFont->getAscent(),curFont->getDescent(),style,weight);
+//		fonts->AddFont(fnt);
 //		updateFont(state);
 		i=this->AddNode(txt);
 		curTxt=txt;
@@ -1584,6 +1674,67 @@ void SVGOutputDev::fill(GfxState *state) {
 	this->AddNode(pt);
 	}
 }
+/*
+
+void SVGOutputDev::clip(GfxState *state) {
+//	closeText();
+
+		
+	double *matrix=state->getCTM();
+	GfxPath *path=state->getPath();
+	GfxRGB rgb;
+	int r=0,g=0,b=0;
+	state->getFillRGB(&rgb);
+	r=(int)(rgb.r/65535.0*255.0);
+	g=(int)(rgb.g/65535.0*255.0);
+	b=(int)(rgb.b/65535.0*255.0);
+	GooString *p=convertPath(matrix, path);
+	
+	
+	SVGClipPath *pt=new SVGClipPath(NULL,NULL,-1,-1,-1,NULL,NULL,-1,-1,-1,p,matrix);
+	this->AddNode(pt);
+}
+
+void SVGOutputDev::eoClip(GfxState *state) {
+//	closeText();
+
+		
+	double *matrix=state->getCTM();
+	GfxPath *path=state->getPath();
+	GfxRGB rgb;
+	int r=0,g=0,b=0;
+	state->getFillRGB(&rgb);
+	r=(int)(rgb.r/65535.0*255.0);
+	g=(int)(rgb.g/65535.0*255.0);
+	b=(int)(rgb.b/65535.0*255.0);
+	GooString *p=convertPath(matrix, path);
+	
+	
+	SVGClipPath *pt=new SVGClipPath(NULL,NULL,-1,-1,-1,NULL,NULL,-1,-1,-1,p,matrix);
+	this->AddNode(pt);
+}
+
+void SVGOutputDev::clipToStrokePath(GfxState *state) {
+//	closeText();
+
+		
+	double *matrix=state->getCTM();
+	GfxPath *path=state->getPath();
+	GfxRGB rgb;
+	int r=0,g=0,b=0;
+	state->getFillRGB(&rgb);
+	r=(int)(rgb.r/65535.0*255.0);
+	g=(int)(rgb.g/65535.0*255.0);
+	b=(int)(rgb.b/65535.0*255.0);
+	GooString *p=convertPath(matrix, path);
+	
+	
+	SVGClipPath *pt=new SVGClipPath(NULL,NULL,-1,-1,-1,NULL,NULL,-1,-1,-1,p,matrix);
+	this->AddNode(pt);
+}
+*/
+
+
 
 void SVGOutputDev::eofill(GfxState *state) {
 //	closeText();

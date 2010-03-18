@@ -31,9 +31,10 @@ private:
 	double descent;
 	GooString *style;
 	GooString *weight;
+	GooString *stretch;
 	
 public:
-	SVGFont(GooString *name, double a,double d,GooString *s, GooString *w);
+	SVGFont(GooString *name, double a,double d,GooString *s, GooString *w, GooString *st);
 	SVGFont();
 	
 	GooString *dump();
@@ -185,6 +186,15 @@ public:
 
 };
 
+class SVGClipPath : public SVGNode{
+	SVGPath *path;
+public:
+	SVGClipPath(double stWidth,double stOp, int stR,int stG,int stB, double fiOp, GooString *fiRu, int fiR,int fiG,int fiB, GooString *p, double *mat);
+	SVGClipPath();
+	~SVGClipPath();
+	GooString *dump();
+};
+
 class SVGOutputDev : public OutputDev {
 public:
   // Constructor.                                                                                                                                                                                          
@@ -256,8 +266,8 @@ public:
 	virtual void clip(GfxState *state);
   virtual void eoClip(GfxState *state);
   virtual void clipToStrokePath(GfxState *state);
-
 */
+
 GooString *convertPath( double *matrix, GfxPath *path );
 bool detectLine(GfxState *state);
 bool detectRect(GfxState *state, int t);
