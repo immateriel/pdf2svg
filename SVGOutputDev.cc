@@ -1247,14 +1247,19 @@ void SVGOutputDev::drawChar(GfxState *state, double x, double y,
 		
 		GooString *stretch=new GooString("normal");
 		
+//		stretch=curFont->getName()->copy();
+		
 		if(curFont->isItalic())
 		{
 			style=new GooString("italic");
 		}
 		
-		
+/*		
 		switch(curFont->getWeight())
 		{
+			case GfxFont::WeightNotDefined:
+			weight=new GooString("undefined");			
+			break;
 			case GfxFont::W100:
 			weight=new GooString("100");
 			break;
@@ -1282,24 +1287,18 @@ void SVGOutputDev::drawChar(GfxState *state, double x, double y,
 			case GfxFont::W900:
 			weight=new GooString("900");
 			break;
-
-
-			default: 
-			if(curFont->isBold())
-			{
-				weight=new GooString("bold");
-			}
-			else
-			{
-				weight=new GooString("normal");
-			}
-			break;
 		}
+		*/
 		
+		if(curFont->isBold())
+		{
+			weight=new GooString("bold");
+		}
+/*		
 		switch(curFont->getStretch())
 		{
 			      case GfxFont::StretchNotDefined:
-						stretch=new GooString("normal");
+						stretch=new GooString("undefined");
 						break;
 
 		        case GfxFont::UltraCondensed:
@@ -1347,7 +1346,7 @@ void SVGOutputDev::drawChar(GfxState *state, double x, double y,
 						break;
 		  
 		}
-		
+*/
 		SVGFont fnt=SVGFont(fntFamily,curFont->getAscent(),curFont->getDescent(),style,weight,stretch);
 		fonts->AddFont(fnt);
 		
@@ -1582,6 +1581,8 @@ void SVGOutputDev::drawString( GfxState * state, GooString * s )
 		
 		switch(curFont->getWeight())
 		{
+			case GfxFont::WeightNotDefined:
+			weight=new GooString("undefined");			
 			case GfxFont::W100:
 			weight=new GooString("100");
 			break;
@@ -1608,11 +1609,6 @@ void SVGOutputDev::drawString( GfxState * state, GooString * s )
 			break;
 			case GfxFont::W900:
 			weight=new GooString("900");
-			break;
-
-
-			default: 
-			weight=new GooString("normal");
 			break;
 		}
 		
