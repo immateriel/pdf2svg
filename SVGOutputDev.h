@@ -14,8 +14,9 @@
 #include "GfxState.h"
 #include "Page.h"
 #include "OutputDev.h"
-#include "fofi/FoFiTrueType.h"
-#include "fofi/FoFiType1C.h"
+
+//#include "fofi/FoFiTrueType.h"
+//#include "fofi/FoFiType1C.h"
 
 #define xoutRound(x) ((int)(x + 0.5))
 
@@ -114,6 +115,8 @@ private:
 	int r,g,b;
 public:
 	double xMin,yMin,xMax,yMax;
+	double spaceSize;
+
 	SVGText(double cx, double cy, double fsize, GooString *ffamily, double wspace, double cspace, int rot, int ir, int ig, int ib );
 	SVGText();
 	~SVGText();
@@ -281,6 +284,7 @@ void transform(double *matrix,
                                void * abortCheckCbkData = NULL)
   {
 	cropBox=page->getCropBox();
+	mediaBox=page->getMediaBox();
    
    return gTrue;
   }
@@ -288,6 +292,7 @@ void transform(double *matrix,
 	int AddNode(SVGNode* node);
 
   void generateFont(GfxState *state);
+		double getSpaceSize(GfxFont *font);
 private:
 	void closeText();
 	
@@ -327,6 +332,8 @@ private:
 
 	GooString *curText;
 	PDFRectangle *cropBox;
+	PDFRectangle *mediaBox;
+
 };
 
 #endif

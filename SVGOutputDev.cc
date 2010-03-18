@@ -158,6 +158,7 @@ SVGText::SVGText(double cx, double cy, double fsize, GooString *ffamily, double 
 	fontFamily=ffamily;
 	wordSpace=wspace;
 	charSpace=cspace;
+	spaceSize=0;
 //	textWidth=tWidth;
 	textW=0;
 	x=cx;
@@ -203,7 +204,7 @@ void SVGText::addStr(GooString *s)
 GooString *SVGText::dump()
 {
 	GooString *output=new GooString("");
-//	output->appendf("<!-- {0:.2f} {1:.2f} {2:.2f} {3:.2f} ({4:.2f} {5:.2f}) -->",xMin,yMin,xMax,yMax,(xMax-xMin),(yMax-yMin));
+//	output->appendf("<!-- {0:.2f} {1:.2f} {2:.2f} {3:.2f} ({4:.2f} {5:.2f}) : {6:.2f} -->\n",xMin,yMin,xMax,yMax,(xMax-xMin),(yMax-yMin),(spaceSize*fontSize)*1.5);
 	output->appendf("<text x=\"{0:.2f}\" y=\"{1:.2f}\"",pixel(x),pixel(y));
 //	if(str->cmp(" ")!=0)
 //	{
@@ -949,7 +950,7 @@ void SVGOutputDev::drawSoftMaskedImage(
 //	printf("<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 20010904//EN\" \n\"http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd\">\n");
 //	printf("<?xml-stylesheet href=\"style.css\" type=\"text/css\"?>\n");
 	printf("<svg version=\"1.2\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" xml:id=\"svg-root\" width=\"%d\" height=\"%d\" viewBox=\"%d %d %d %d\" xmlns=\"http://www.w3.org/2000/svg\">\n",
-	(int)pixel(curPageWidth),(int)pixel(curPageHeight),(int)pixel(this->cropBox->x1),(int)pixel(this->cropBox->y1),(int)pixel(this->cropBox->x2 - this->cropBox->x1),(int)pixel(this->cropBox->y2 - this->cropBox->y1));
+	(int)pixel(curPageWidth),(int)pixel(curPageHeight),(int)pixel(this->cropBox->x1),(int)pixel(this->mediaBox->y2 - this->cropBox->y2),(int)pixel(this->cropBox->x2 - this->cropBox->x1),(int)pixel(this->cropBox->y2 - this->cropBox->y1));
 	printf("<defs>\n");
 //	printf("<style>\n");
 
@@ -1141,13 +1142,13 @@ void SVGOutputDev::drawChar(GfxState *state, double x, double y,
 		&& fontFamily->cmp(fntFamily) == 0  
 //		&& charSpace==state->getCharSpace() 
 //		&& wordSpace==state->getWordSpace()
-		&& cx < curTxt->xMax + 3.0
+		&& cx < curTxt->xMax + (curTxt->spaceSize*fontSize)*1.5
 		)
 	{
 		curTxt->addStr(uconv(u,uLen));
 		curTxt->xMax=curTxt->xMax+dx;
 		// - (state->getCharSpace() * state->getHorizScaling());
-		curTxt->yMax=curTxt->yMax+dy;
+//		curTxt->yMax=curTxt->yMax+dy;
 		curTxt->setTextWidth(curTxt->xMax - curTxt->xMin);
 //		startX=cx+curTxt->xMax;
 		
@@ -1195,7 +1196,18 @@ void SVGOutputDev::drawChar(GfxState *state, double x, double y,
 		curTxt->setTextWidth(curTxt->xMax - curTxt->xMin);
 		
 		startX=cx + (curTxt->xMax - curTxt->xMin);
+		curTxt->spaceSize=getSpaceSize(curFont);
 		
+		double *bbox=curFont->getFontBBox();
+		double tmpx,tmpy;
+//		printf("%.2f %.2f %.2f %.2f\n",bbox[0],bbox[1],bbox[2],bbox[3]);
+//		state->transform(bbox[0],bbox[1],&tmpx,&tmpy);
+		curTxt->yMin=cy;
+//		(bbox[1]*state->getTransformedFontSize()
+//		state->transform(bbox[2],bbox[3],&tmpx,&tmpy);
+		curTxt->yMax=cy+(bbox[3]*state->getTransformedFontSize());
+
+		/*
 		GooString *style=new GooString("normal");
 		GooString *weight=new GooString("");
 		
@@ -1243,9 +1255,32 @@ void SVGOutputDev::drawChar(GfxState *state, double x, double y,
 		
 		SVGFont fnt=SVGFont(fntFamily,curFont->getAscent(),curFont->getDescent(),style,weight);
 		fonts->AddFont(fnt);
+		*/
 	}
 	lineY=y;	
 	
+}
+
+double SVGOutputDev::getSpaceSize(GfxFont *font)
+{
+	GooString *s=new GooString(" ");
+	char * p = s->getCString();
+	int len = s->getLength();
+	Unicode *u = NULL;
+	Unicode *str=NULL;
+	int slen=0;
+	int uLen;
+	int size=0;
+	double dx, dy, originX, originY;
+	CharCode code;
+	
+	int n = font->getNextChar(p, len, &code, &u, &uLen, &dx, &dy, &originX, &originY);
+//	printf("%.2f\n",dx*font->getSize());
+	
+	if(dx==0)
+		return 2.0;
+	else
+		return dx;
 }
 
 void SVGOutputDev::drawString( GfxState * state, GooString * s )
